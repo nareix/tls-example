@@ -13,8 +13,6 @@ import (
 )
 
 func main() {
-
-	// 创建 CA 根证书
 	ca := &x509.Certificate{
 		SerialNumber: big.NewInt(1653),
 		Subject: pkix.Name{
@@ -24,8 +22,11 @@ func main() {
 		},
 		NotBefore: time.Now(),
 		NotAfter: time.Now().AddDate(10,0,0),
+		SubjectKeyId: []byte{1,2,3,4,5},
 		BasicConstraintsValid: true,
 		IsCA: true,
+		ExtKeyUsage: []x509.ExtKeyUsage{x509.ExtKeyUsageClientAuth, x509.ExtKeyUsageServerAuth},
+		KeyUsage: x509.KeyUsageDigitalSignature|x509.KeyUsageCertSign,
 	}
 
 	priv, _ := rsa.GenerateKey(rand.Reader, 1024)
@@ -44,7 +45,6 @@ func main() {
 	log.Println("write to", priv_f)
 	ioutil.WriteFile(priv_f, priv_b, 0777)
 
-	// 用 CA 证书签署自己的证书
 	cert2 := &x509.Certificate{
 		SerialNumber: big.NewInt(1658),
 		Subject: pkix.Name{
@@ -54,6 +54,9 @@ func main() {
 		},
 		NotBefore: time.Now(),
 		NotAfter: time.Now().AddDate(10,0,0),
+		SubjectKeyId: []byte{1,2,3,4,6},
+		ExtKeyUsage: []x509.ExtKeyUsage{x509.ExtKeyUsageClientAuth, x509.ExtKeyUsageServerAuth},
+		KeyUsage: x509.KeyUsageDigitalSignature|x509.KeyUsageCertSign,
 	}
 	priv2, _ := rsa.GenerateKey(rand.Reader, 1024)
 	pub2 := &priv2.PublicKey
@@ -72,7 +75,6 @@ func main() {
 	log.Println("write to", priv2_f)
 	ioutil.WriteFile(priv2_f, priv2_b, 0777)
 
-	// 验证证书是否为 CA 签署的
 	ca_c, _ := x509.ParseCertificate(ca_b)
 	cert2_c, _ := x509.ParseCertificate(cert2_b)
 
